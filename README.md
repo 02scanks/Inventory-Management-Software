@@ -2,6 +2,9 @@
 
 The Inventory Management System is a Windows Forms application developed in C# that allows users to manage and track inventory items, including purchases and sales. The application interacts with a MySQL database to perform various operations such as adding, editing, deleting, and retrieving data. The system provides functionality to calculate inventory statistics and profit margins, and it offers alerts for low stock items.
 
+<img>![image](https://github.com/user-attachments/assets/bafeefea-7dd5-4205-8b2c-7a8204e2e110)
+</img>
+
 <h2>Features</h2>
 <p>-Add Items: Add new purchases or sales to the database with details like name, description, category, quantity, price, and date.
 
