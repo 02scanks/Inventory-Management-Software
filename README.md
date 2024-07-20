@@ -4,7 +4,9 @@ The Inventory Management System is a Windows Forms application developed in C# t
 
 <h2>Features</h2>
 <p>-Add Items: Add new purchases or sales to the database with details like name, description, category, quantity, price, and date.
-  
+
+-Asynchronous Database Operations: All database operations are performed asynchronously, ensuring a responsive UI.
+
 -Edit Items: Update existing item details in the database.
 
 -Delete Items: Remove items from the database.
@@ -23,8 +25,51 @@ The Inventory Management System is a Windows Forms application developed in C# t
 <b>Clone the Repository:</b>
 
 <h3><p>git clone https://github.com/02scanks/inventory-management-software.git</p></h3>
+
+<h2>Technologies Used</h2>
+
+<p>-C#
+
+-Windows Forms
+
+-MySQL
+
+-MySQL.Data.MySqlClient
+
+-Asynchronous Programming (async/await)</p>
+
+
+<h2>DATABASE SETUP</h2>
+
 <h3>Set Up MySQL Database</h3>
-Create a MySQL database with 2 tables called "purchases" and "sales" and then configure the connection string in the App.config file:
+Create a MySQL database with 2 tables called "purchases" and "sales" and then configure the connection string in the App.config file
+
+
+<h2>Heres the SQL Commands For The 2 Tables:</h2>
+
+CREATE TABLE sales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(50),
+    quantity INT,
+    price FLOAT,
+    itemDate DATE,
+    UNIQUE(name)
+);
+
+
+CREATE TABLE purchases (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(50),
+    quantity INT,
+    price FLOAT,
+    itemDate DATE,
+    UNIQUE(name)
+);
+
 <h2>String Example</h2>
 name="DbConnectionString" connectionString="server=yourserver;database=yourdatabase;user=youruser;password=yourpassword;" providerName="MySql.Data.MySqlClient"
 
