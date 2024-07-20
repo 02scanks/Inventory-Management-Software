@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.VisualBasic;
 
@@ -48,15 +49,15 @@ namespace InventoryManagementSystem
                 if (categoryCombo.Text == "Purchase")
                 {
                     // query database with purchase query
-                    db.AddItem(item.Name, item.Description, item.Category, item.Quantity, item.Price, item.itemDate, db.addPurchaseQuery);
+                    db.AddItemAsync(item.Name, item.Description, item.Category, item.Quantity, item.Price, item.itemDate, db.addPurchaseQuery);
                 }
                 else if (categoryCombo.Text == "Sale")
                 {
                     // query database with sale query
-                    db.AddItem(item.Name, item.Description, item.Category, item.Quantity, item.Price, item.itemDate, db.addSaleQuery);
+                    db.AddItemAsync(item.Name, item.Description, item.Category, item.Quantity, item.Price, item.itemDate, db.addSaleQuery);
 
                     //Find item in stock list and subtract the sale quantity amount from available item stock quantity
-                    db.SubtractSaleItem(item.Name, item.Quantity);
+                    db.SubtractSaleItemAsync(item.Name, item.Quantity);
                 }
                 
             }
@@ -79,15 +80,15 @@ namespace InventoryManagementSystem
 
             if (saleOnlyRadio.Checked)
             {
-                db.PopulateSaleList(transactionGrid, db.saleOnlyQuery);
+                db.PopulateSaleListAsync(transactionGrid, db.saleOnlyQuery);
             }
             else if (purchaseOnlyRadio.Checked)
             {
-                db.PopulateSaleList(transactionGrid, db.purchaseOnlyQuery);
+                db.PopulateSaleListAsync(transactionGrid, db.purchaseOnlyQuery);
             }
             else if (showAllRadio.Checked) 
             {
-                db.PopulateSaleList(transactionGrid, db.showAllQuery);
+                db.PopulateSaleListAsync(transactionGrid, db.showAllQuery);
             }
         }
 
@@ -97,7 +98,7 @@ namespace InventoryManagementSystem
             {
                 // clear rows to avoid duplicating
                 transactionGrid.Rows.Clear();
-                db.Search(searchBox.Text, transactionGrid);
+                db.SearchAsync(searchBox.Text, transactionGrid);
                 searchBox.Text = string.Empty;
             }
         }
@@ -208,12 +209,12 @@ namespace InventoryManagementSystem
                         //Query Database
                         if (newCategory == "Purchase")
                         {
-                            db.EditData(db.editPurchaseQuery, newName, newCategory, newQuantity, newPrice,
+                            db.EditDataAsync(db.editPurchaseQuery, newName, newCategory, newQuantity, newPrice,
                                         newDate, oldName, oldCategory, oldQuantity, oldPrice, oldDate);
                         }
                         else if (newCategory == "Sale")
                         {
-                            db.EditData(db.editSaleQuery, newName, newCategory, newQuantity, newPrice,
+                            db.EditDataAsync(db.editSaleQuery, newName, newCategory, newQuantity, newPrice,
                                         newDate, oldName, oldCategory, oldQuantity, oldPrice, oldDate);
                         }
                         else 
@@ -302,18 +303,18 @@ namespace InventoryManagementSystem
         #endregion
 
 
-        public void CalculateStockStats()
+        public async Task CalculateStockStats()
         {
             //Get stock list stats for inventory amount and quantity
-            int[] stocklistStats = db.CalculateInventoryStats();
+            int[] stocklistStats = await db.CalculateInventoryStatsAsync();
 
             //Assign them to text counterparts
             inventoryQuantity.Text = stocklistStats[0].ToString();
             inventoryAmount.Text = stocklistStats[1].ToString();
 
             // Get stocklist stats for purchase total, sales total and profit total
-            float saleTotal = db.CalculateProfitStats(db.saleTotalQuery);
-            float purchaseTotal = db.CalculateProfitStats(db.purchaseTotalQuery);
+            float saleTotal = await db.CalculateProfitStatsAsync(db.saleTotalQuery);
+            float purchaseTotal = await db.CalculateProfitStatsAsync(db.purchaseTotalQuery);
 
             //Assign them to text counterparts
             totalSales.Text = $"${saleTotal.ToString()}";
@@ -341,8 +342,8 @@ namespace InventoryManagementSystem
             transactionGrid.Rows.Clear();
 
             //Populate Data tables
-            db.PopulateStockList(availableStocksGrid);
-            db.PopulateSaleList(transactionGrid, db.saleOnlyQuery);
+            db.PopulateStockListAsync(availableStocksGrid);
+            db.PopulateSaleListAsync(transactionGrid, db.saleOnlyQuery);
 
             //Get stock list stats
             CalculateStockStats();

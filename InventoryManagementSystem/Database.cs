@@ -60,8 +60,10 @@ public class Database
 
     #endregion
 
-    public void AddItem(string name, string desc, string category, int quantity, float price, DateTime date, string query)
+        public async Task AddItemAsync(string name, string desc, string category, int quantity, float price, DateTime date, string query)
     {
+        //Set Cursor To Wait Cursor To Show User A Task Is Running
+        Cursor.Current = Cursors.WaitCursor;
 
         try
         {
@@ -77,11 +79,11 @@ public class Database
                 command.Parameters.AddWithValue("@itemDate", date);
 
 
-                // Open connection
-                connection.Open();
+                // Open connection asynchronously
+                await connection.OpenAsync();
 
                 //check if result is successful
-                int result = command.ExecuteNonQuery();
+                int result = await command.ExecuteNonQueryAsync();
                 if (result > 0)
                 {
                     MessageBox.Show("Item Added");
@@ -93,10 +95,10 @@ public class Database
             MessageBox.Show($"{ex.Message}");
         }
 
-        // Subtract Sale Items from Total quantity
+        Cursor.Current = Cursors.Default;
     }
 
-    public void SubtractSaleItem(string itemName, int saleQuantity) 
+    public async Task SubtractSaleItemAsync(string itemName, int saleQuantity) 
     {
         string updateStockQuery = "UPDATE purchases SET quantity = quantity - @amountToSubtract WHERE name = @name";
         string checkStockQuery = "SELECT quantity FROM purchases WHERE name = @name";
@@ -105,15 +107,16 @@ public class Database
         {
             using (var connection = new MySqlConnection(CONNECTIONSTRING)) 
             {
-                // Open connection
-                connection.Open();
+                // Open connection asynchronously
+                await connection.OpenAsync();
 
                 //Check if stock is available 
                 using (var checkCommand = new MySqlCommand(checkStockQuery, connection)) 
                 {
                     checkCommand.Parameters.AddWithValue("@name", itemName);
 
-                    var currentStock = (int?)checkCommand.ExecuteScalar();
+                    // Check for stock value asynchronously
+                    var currentStock = (int?) await checkCommand.ExecuteScalarAsync();
                     
                     //checking if current stock is real and has a value greater then the sale amount
                     if (currentStock.HasValue && currentStock.Value >= saleQuantity)
@@ -127,7 +130,7 @@ public class Database
 
 
                             //execute command
-                            updateStockCommand.ExecuteNonQuery();
+                            await updateStockCommand.ExecuteNonQueryAsync();
 
                         }
                     }
@@ -146,8 +149,11 @@ public class Database
         }
     }
 
-    public void PopulateStockList(DataGridView dataTable)
+    public async Task PopulateStockListAsync(DataGridView dataTable)
     {
+        //Set Cursor To Wait Cursor To Show User A Task Is Running
+        Cursor.Current = Cursors.WaitCursor;
+
         List<string> lowQuantityItems = new List<string>();
 
         string query = "SELECT name, quantity FROM purchases WHERE category = @Purchase";
@@ -161,16 +167,16 @@ public class Database
                 command.Parameters.AddWithValue("@Purchase", PURCHASE);
 
 
-                // Open connection
-               connection.Open();
+                // Open connection asynchronously
+                await connection.OpenAsync();
 
-                //read data from db
-                using (var reader = command.ExecuteReader())
+                //read data from db asynchronously
+                using (var reader = await command.ExecuteReaderAsync())
                 {
-                    while (reader.Read())
+                    while (await reader.ReadAsync())
                     {
-                        string name = reader.GetString("name");
-                        int quantity = reader.GetInt32("quantity");
+                        string name = reader.GetString(reader.GetOrdinal("name"));
+                        int quantity = reader.GetInt32(reader.GetOrdinal("quantity"));
 
                         // check if item quantity is low and if it is add to list
                         if (quantity < 50)
@@ -198,10 +204,14 @@ public class Database
             }
 
         }
+
+        Cursor.Current = Cursors.Default;
     }
 
-    public void PopulateSaleList(DataGridView dataTable, string query)
+    public async Task PopulateSaleListAsync(DataGridView dataTable, string query)
     {
+        //Set Cursor To Wait Cursor To Show User A Task Is Running
+        Cursor.Current = Cursors.WaitCursor;
 
         try
         {
@@ -213,19 +223,19 @@ public class Database
                 command.Parameters.AddWithValue("@Purchase", PURCHASE);
 
 
-                // Open connection
-                connection.Open();
+                // Open connection asynchronously
+                await connection.OpenAsync();
 
-                //read data from db
-                using (var reader = command.ExecuteReader())
+                //read data from db asynchronously
+                using (var reader = await command.ExecuteReaderAsync())
                 {
-                    while (reader.Read())
+                    while (await reader.ReadAsync())
                     {
-                        string name = reader.GetString("name");
-                        string category = reader.GetString("category");
-                        int quantity = reader.GetInt32("quantity");
-                        float price = reader.GetFloat("price");
-                        DateTime date = reader.GetDateTime("itemDate");
+                        string name = reader.GetString(reader.GetOrdinal("name"));
+                        string category = reader.GetString(reader.GetOrdinal("category"));
+                        int quantity = reader.GetInt32(reader.GetOrdinal("quantity"));
+                        float price = reader.GetFloat(reader.GetOrdinal("price"));
+                        DateTime date = reader.GetDateTime(reader.GetOrdinal("itemDate"));
 
                         dataTable.Rows.Add(name, category, quantity, price, date);
                     }
@@ -236,9 +246,11 @@ public class Database
         {
             MessageBox.Show($"{ex.Message}");
         }
+
+        Cursor.Current = Cursors.Default;
     }
 
-    public int[] CalculateInventoryStats() 
+    public async Task<int[]> CalculateInventoryStatsAsync() 
     {
         int[] stats = new int[2];
 
@@ -253,16 +265,16 @@ public class Database
                 command.Parameters.AddWithValue("@category", PURCHASE);
 
 
-                // Open connection
-                connection.Open();
+                // Open connection asynchronously
+                await connection.OpenAsync();
 
-                //read data from db
-                using (var reader = command.ExecuteReader())
+                //read data from db asynchronously
+                using (var reader = await command.ExecuteReaderAsync())
                 {
-                    while (reader.Read())
+                    while (await reader.ReadAsync())
                     {
-                        string name = reader.GetString("name");
-                        int quantity = reader.GetInt32("quantity");
+                        string name = reader.GetString(reader.GetOrdinal("name"));
+                        int quantity = reader.GetInt32(reader.GetOrdinal("quantity"));
 
                         stats[0]++;
                         stats[1] += quantity;
@@ -278,7 +290,7 @@ public class Database
         return stats;
     }
 
-    public float CalculateProfitStats(string query)
+    public async Task<float> CalculateProfitStatsAsync(string query)
     {
         float total = 0; 
 
@@ -291,15 +303,15 @@ public class Database
                 command.Parameters.AddWithValue("@Profit", PURCHASE);
                 command.Parameters.AddWithValue("@Sale", SALE);
 
-                // Open connection
-                connection.Open();
+                // Open connection asynchronously
+                await connection.OpenAsync();
 
-                //read data from db
-                using (var reader = command.ExecuteReader())
+                //read data from db asynchronously
+                using (var reader = await command.ExecuteReaderAsync())
                 {
-                    while (reader.Read())
+                    while (await reader.ReadAsync())
                     {
-                        float price = reader.GetFloat("price");
+                        float price = reader.GetFloat(reader.GetOrdinal("price"));
                         
                         total += price;
                     }
@@ -314,7 +326,7 @@ public class Database
         return total;
     }
 
-    public void Search(string itemName, DataGridView dataTable) 
+    public async Task SearchAsync(string itemName, DataGridView dataTable) 
     {
         string query = @"SELECT name, category, quantity, price, itemDate FROM purchases WHERE name LIKE @name
                         UNION
@@ -328,20 +340,20 @@ public class Database
                 // Add values into query
                 command.Parameters.AddWithValue("@name", "%" + itemName + "%");
 
-                // Open connection
-                connection.Open();
+                // Open connection asynchronously
+                await connection.OpenAsync();
 
-                //read data from db
-                using (var reader = command.ExecuteReader())
+                //read data from db asynchronously
+                using (var reader = await command.ExecuteReaderAsync())
                 {
-                    while (reader.Read())
+                    while (await reader.ReadAsync())
                     {
                         // Get Data from reader
-                        string name = reader.GetString("name");
-                        string category = reader.GetString("category");
-                        int quantity = reader.GetInt32("quantity");
-                        float price = reader.GetFloat("price");
-                        DateTime date = reader.GetDateTime("itemDate");
+                        string name = reader.GetString(reader.GetOrdinal("name"));
+                        string category = reader.GetString(reader.GetOrdinal("category"));
+                        int quantity = reader.GetInt32(reader.GetOrdinal("quantity"));
+                        float price = reader.GetFloat(reader.GetOrdinal("price"));
+                        DateTime date = reader.GetDateTime(reader.GetOrdinal("itemDate"));
 
                         //add data to table
                         dataTable.Rows.Add(name, category, quantity, price, date);
@@ -356,7 +368,7 @@ public class Database
         
     }
 
-    public void EditData(string query, string newName, string newCategory, int newQuantity, float newPrice, DateTime newDate,
+    public async Task EditDataAsync(string query, string newName, string newCategory, int newQuantity, float newPrice, DateTime newDate,
                          string oldName, string oldCategory, int oldQuantity, float oldPrice, DateTime oldDate) 
     {
         
@@ -379,10 +391,10 @@ public class Database
                 command.Parameters.AddWithValue("@oldPrice", oldPrice);
                 command.Parameters.AddWithValue("@oldDate", oldDate);
 
-                //Open Connection
-                connection.Open();
+                //Open Connection asynchronously
+                await connection.OpenAsync();
 
-                int result = command.ExecuteNonQuery();
+                int result = await command.ExecuteNonQueryAsync();
                 if (result > 0) 
                 {
                     MessageBox.Show("Data Successfully Edited");
@@ -395,15 +407,15 @@ public class Database
         }
     }
 
-    public void DeleteRow(string query, string name, string category, int quantity, float price, DateTime date) 
+    public async Task DeleteRow(string query, string name, string category, int quantity, float price, DateTime date) 
     {
         try
         {
             using (var connection = new MySqlConnection(CONNECTIONSTRING))
             using (var command = new MySqlCommand(query, connection))
             {
-                //Open the connection
-                connection.Open();
+                //Open the connection asynchronously
+                await connection.OpenAsync();
 
                 //Add command parameters
                 command.Parameters.AddWithValue("@name", name);
@@ -412,8 +424,8 @@ public class Database
                 command.Parameters.AddWithValue("@price", price);
                 command.Parameters.AddWithValue("@date", date);
 
-                //Execute command and inform user of success
-                int result = command.ExecuteNonQuery();
+                //Execute command asynchronously and inform user of success
+                int result = await command.ExecuteNonQueryAsync();
                 if (result > 0) 
                 {
                     MessageBox.Show("Data Deleted");
@@ -426,4 +438,5 @@ public class Database
         }
         
     }
+}
 }
